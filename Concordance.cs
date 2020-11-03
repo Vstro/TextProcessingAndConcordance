@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
@@ -50,7 +50,10 @@ namespace TextProcessing
                             (PageNum + 1) % 2 + ".concordance", Encoding.UTF8))
                         {
                             ReadCurrentPageConcordance(file);
-                            UniteTotalAndCurrentPageConcordances(newTotalConcordance, oldTotalConcordance);
+                            if (PageConcordance.Count > 0)
+                            {
+                                UniteTotalAndCurrentPageConcordances(newTotalConcordance, oldTotalConcordance);
+                            }
                         }
                     }
                 }
@@ -95,7 +98,6 @@ namespace TextProcessing
                 currentPage.Append(file.ReadLine() + " ");
                 if (file.EndOfStream) break;
             }
-            PageNum++;
             PageConcordance.Clear();
             foreach (Word w in new Sentence(currentPage.ToString()).Words)
             {
@@ -108,32 +110,41 @@ namespace TextProcessing
                     });
                 }
             }
-            UnitePageConcordanceDuplicates();
-            SortPageConcordance();
+            if (PageConcordance.Count > 0)
+            {
+                PageNum++;
+                UnitePageConcordanceDuplicates();
+                SortPageConcordance();
+            }
         }
 
         private void UniteTotalAndCurrentPageConcordances(StreamWriter newTotalConcordance, StreamReader oldTotalConcordance)
         {
             int elementIndex = 0;
+            String[] totalConcordanceElement;
             int compareResult = -1;
             bool endOfOldTotalConcordance = false;
-            String[] totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
-            while (!endOfOldTotalConcordance || elementIndex < PageConcordance.Count)
+            bool endOfPageConcordance = false;
+            totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
+            while (!endOfOldTotalConcordance || !endOfPageConcordance)
             {
-                if (elementIndex < PageConcordance.Count)
-                {
-                    compareResult = totalConcordanceElement[0]
-                        .CompareTo(PageConcordance[elementIndex].Word);
-                }
-                if (endOfOldTotalConcordance || compareResult > 0)
+                compareResult = totalConcordanceElement[0].CompareTo(PageConcordance[elementIndex].Word);
+                if (endOfOldTotalConcordance || (!endOfPageConcordance && compareResult > 0))
                 {
                     newTotalConcordance.WriteLine(
                         PageConcordance[elementIndex].Word + " " +
                         PageConcordance[elementIndex].ThePageFrequency + " " +
                         PageNum);
-                    elementIndex++;
+                    if (elementIndex < PageConcordance.Count - 1)
+                    {
+                        elementIndex++;
+                    }
+                    else
+                    {
+                        endOfPageConcordance = true;
+                    }
                 }
-                else if (elementIndex >= PageConcordance.Count || compareResult < 0)
+                else if (endOfPageConcordance || compareResult < 0)
                 {
                     newTotalConcordance.WriteLine(
                         totalConcordanceElement.Aggregate((s1, s2) => s1 + " " + s2));
@@ -150,7 +161,14 @@ namespace TextProcessing
                         (PageConcordance[elementIndex].ThePageFrequency + oldTotalFrequency) + " " +
                         totalConcordanceElement.Skip(2).Aggregate((s1, s2) => s1 + " " + s2) + " " +
                         PageNum);
-                    elementIndex++;
+                    if (elementIndex < PageConcordance.Count - 1)
+                    {
+                        elementIndex++;
+                    }
+                    else
+                    {
+                        endOfPageConcordance = true;
+                    }
                     endOfOldTotalConcordance = oldTotalConcordance.EndOfStream;
                     if (!endOfOldTotalConcordance)
                         totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
@@ -160,10 +178,11 @@ namespace TextProcessing
 
         private void WriteFormattedConcordance(StreamWriter newFile, StreamReader tempTotalConcordance)
         {
-            String[] totalConcordanceElement = tempTotalConcordance.ReadLine().Split(' ');
+            String[] totalConcordanceElement;
             char currentGroupLetter = '\uFEFF';
             while (!tempTotalConcordance.EndOfStream)
             {
+                totalConcordanceElement = tempTotalConcordance.ReadLine().Split(' ');
                 if (currentGroupLetter != totalConcordanceElement[0][0])
                 {
                     newFile.WriteLine(totalConcordanceElement[0][0].ToString().ToUpper());
@@ -176,7 +195,6 @@ namespace TextProcessing
                 }
                 newFile.WriteLine(totalConcordanceElement[1] + ": " +
                     totalConcordanceElement.Skip(2).Aggregate((s1, s2) => s1 + " " + s2));
-                totalConcordanceElement = tempTotalConcordance.ReadLine().Split(' ');
             }
         }
     }
