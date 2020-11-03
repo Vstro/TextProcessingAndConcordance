@@ -116,15 +116,16 @@ namespace TextProcessing
         {
             int elementIndex = 0;
             int compareResult = -1;
+            bool endOfOldTotalConcordance = false;
             String[] totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
-            while (!oldTotalConcordance.EndOfStream || elementIndex < PageConcordance.Count)
+            while (!endOfOldTotalConcordance || elementIndex < PageConcordance.Count)
             {
                 if (elementIndex < PageConcordance.Count)
                 {
                     compareResult = totalConcordanceElement[0]
                         .CompareTo(PageConcordance[elementIndex].Word);
                 }
-                if (oldTotalConcordance.EndOfStream || compareResult > 0)
+                if (endOfOldTotalConcordance || compareResult > 0)
                 {
                     newTotalConcordance.WriteLine(
                         PageConcordance[elementIndex].Word + " " +
@@ -136,7 +137,9 @@ namespace TextProcessing
                 {
                     newTotalConcordance.WriteLine(
                         totalConcordanceElement.Aggregate((s1, s2) => s1 + " " + s2));
-                    totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
+                    endOfOldTotalConcordance = oldTotalConcordance.EndOfStream;
+                    if (!endOfOldTotalConcordance)
+                        totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
                 }
                 else
                 {
@@ -148,7 +151,9 @@ namespace TextProcessing
                         totalConcordanceElement.Skip(2).Aggregate((s1, s2) => s1 + " " + s2) + " " +
                         PageNum);
                     elementIndex++;
-                    totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
+                    endOfOldTotalConcordance = oldTotalConcordance.EndOfStream;
+                    if (!endOfOldTotalConcordance)
+                        totalConcordanceElement = oldTotalConcordance.ReadLine().Split(' ');
                 }
             }
         }
