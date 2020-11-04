@@ -11,7 +11,6 @@ namespace TextProcessing
     {
         public Sentence CurrentSentence { get; set; }
         public String TextFileName { get; set; }
-        //public delegate int WordsAmount(Sentence sentence);
 
         public TextStream(String textFileName = "text.txt")
         {
